@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sambung kata</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; background: #fff0f5; padding: 40px 10px; }
+        .card { background: white; padding: 30px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); display: inline-block; width: 90%; max-width: 450px; vertical-align: top; }
+        h2 { color: #ff4d94; margin-bottom: 20px; }
+        .input-group { display: flex; justify-content: center; gap: 10px; }
+        input { width: 35%; padding: 15px; border: 2px solid #ffccd5; border-radius: 12px; outline: none; font-size: 16px; }
+        button { width: 90%; padding: 15px; background: #ff4d94; color: white; border: none; border-radius: 12px; font-weight: bold; font-size: 18px; margin-top: 15px; cursor: pointer; }
+        #res { margin-top: 30px; font-size: 45px; color: #ff4d94; font-weight: 900; text-transform: uppercase; min-height: 60px; }
+        
+        /* Style History */
+        .history-box { margin-top: 20px; text-align: left; background: #fdfdfd; padding: 15px; border-radius: 15px; border: 1px solid #eee; }
+        .history-title { font-size: 14px; font-weight: bold; color: #ff4d94; margin-bottom: 10px; }
+        .history-list { font-size: 13px; color: #666; display: flex; flex-wrap: wrap; gap: 5px; max-height: 100px; overflow-y: auto; }
+        .history-item { background: #ffeef4; padding: 2px 8px; border-radius: 5px; }
+        
+        #stats { margin-top: 15px; font-size: 12px; color: #999; }
+        .info-text { margin-top: 10px; font-size: 11px; color: #bbb; font-style: italic; }
+        /* Style untuk teks baru */
+        .fun-text { margin-top: 15px; font-size: 12px; color: #ff4d94; font-weight: bold; }
+        .reset-btn { background: #ccc; font-size: 11px; padding: 5px 10px; width: auto; margin-top: 10px; border-radius: 8px; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Pencari Kata Acak</h2>
+        <div class="input-group">
+            <input type="text" id="aw" placeholder="Awal" maxlength="5">
+            <input type="text" id="ak" placeholder="Akhir" maxlength="5">
+        </div>
+        <button onclick="cari()">CARI KATA</button>
+        
+        <div id="res">---</div>
+        
+        <div id="stats">Memuat data...</div>
+        <div class="info-text">Tidak semua kata dapat digunakan.</div>
+        
+        <div class="fun-text">Hanya untuk have fun gunakan sebaik mungkin</div>
+
+        <div class="history-box">
+            <div class="history-title">Riwayat Kata:</div>
+            <div id="historyList" class="history-list">Belum ada kata.</div>
+            <button class="reset-btn" onclick="resetHistory()">Reset Riwayat</button>
+        </div>
+    </div>
+
+    <script>
+        let database = [];
+        let historyKata = [];
+
+        fetch('kosakata.txt')
+            .then(response => response.text())
+            .then(text => {
+                const regex = /"([^"]*)"/g;
+                let match;
+                while ((match = regex.exec(text)) !== null) {
+                    if (match[1].trim()) database.push(match[1].toLowerCase());
+                }
+                document.getElementById('stats').innerText = "Database: " + database.length + " kata.";
+                document.getElementById('res').innerText = "SIAP!";
+            })
+            .catch(err => {
+                document.getElementById('stats').innerText = "Gagal memuat file.";
+            });
+
+        function cari() {
+            const aw = document.getElementById('aw').value.toLowerCase().trim();
+            const ak = document.getElementById('ak').value.toLowerCase().trim();
+            const resDiv = document.getElementById('res');
+
+            const hasil = database.filter(k => 
+                k.startsWith(aw) && 
+                k.endsWith(ak) && 
+                !historyKata.includes(k)
+            );
+
+            if (hasil.length > 0) {
+                const acak = hasil[Math.floor(Math.random() * hasil.length)];
+                historyKata.push(acak);
+                resDiv.innerText = acak.toUpperCase();
+                updateHistoryUI();
+            } else {
+                resDiv.innerText = "Habis / Tidak Ada";
+            }
+        }
+
+        function updateHistoryUI() {
+            const historyDiv = document.getElementById('historyList');
+            if (historyKata.length === 0) {
+                historyDiv.innerHTML = "Belum ada kata.";
+                return;
+            }
+            historyDiv.innerHTML = historyKata.map(k => `<span class="history-item">${k}</span>`).join('');
+            // Otomatis scroll ke bawah pada history jika sudah banyak
+            historyDiv.scrollTop = historyDiv.scrollHeight;
+        }
+
+        function resetHistory() {
+            historyKata = [];
+            updateHistoryUI();
+            document.getElementById('res').innerText = "SIAP!";
+        }
+    </script>
+</body>
+</html>
